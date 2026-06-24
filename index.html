@@ -673,12 +673,28 @@ const QUESTIONS = {
   }
   // pick n plausible wrong answers, preferably from the same topic
   function distractors(t, correct, n){
+    // jelöltek: előbb az azonos témakörből, ha kevés, akkor az összesből
     let pool = [...new Set(t.items.map(x=>x.a).filter(a=>a!==correct))];
-    if(pool.length < n){
+    if(pool.length < n*3){
       T.forEach(tt=>{ if(tt!==t) tt.items.forEach(x=>{ if(x.a!==correct) pool.push(x.a); }); });
       pool = [...new Set(pool)];
     }
-    return shuffleArr(pool).slice(0, n);
+    // tartalmi szavak (>=4 betű) a hasonlóság méréséhez
+    const toks = s => new Set((s.toLowerCase().match(/\p{L}{4,}/gu)||[]));
+    const ct = toks(correct), cl = correct.length, cArr = [...ct];
+    const scored = pool.map(a=>{
+      const at = toks(a); let shared = 0; cArr.forEach(w=>{ if(at.has(w)) shared++; });
+      const overlap = ct.size ? shared/ct.size : 0;                       // mennyire fedi a helyes válasz szókészletét
+      const lenSim = 1 - Math.abs(a.length-cl)/Math.max(a.length, cl, 1); // hasonló hosszúság
+      return { a, overlap, sc: overlap*2 + lenSim };
+    }).filter(o=>o.overlap <= 0.85)        // ne legyen kvázi-azonos a helyessel (rejtett jó válasz)
+      .sort((x,y)=> y.sc - x.sc);
+    const ranked = scored.map(o=>o.a);
+    // a leghasonlóbb sávból válasszunk véletlenül → hihető, de nem mindig ugyanaz
+    let picks = shuffleArr(ranked.slice(0, Math.max(n*3, 8))).slice(0, n);
+    for(const a of ranked){ if(picks.length>=n) break; if(!picks.includes(a)) picks.push(a); }
+    for(const a of pool){ if(picks.length>=n) break; if(!picks.includes(a)) picks.push(a); }
+    return picks;
   }
 
   function renderQuiz(scrollToQ){
