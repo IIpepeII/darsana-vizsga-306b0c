@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3a2a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Darsana vizsga">
+<title>Indiai filozófiai iskolák — vizsgakérdések</title>
+<style>
+  :root{
+    --bg:#14110d; --bg2:#1d1812; --card:#241d15; --card2:#2c2419;
+    --ink:#f3ead9; --ink-dim:#bfae93; --line:#3a3024;
+    --accent:#d99a4e; --accent-dim:#7a5a2e; --warn:#e0b341; --good:#8fb96b;
+    --shadow:0 6px 22px rgba(0,0,0,.45);
+    --r:16px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f3ecdf; --bg2:#ece2d0; --card:#fffaf0; --card2:#f6eeda;
+      --ink:#2a2218; --ink-dim:#6c5b41; --line:#ddd0b6;
+      --accent:#a96b18; --accent-dim:#caa063; --warn:#9a6b00; --good:#4f7a2a;
+      --shadow:0 6px 18px rgba(120,90,40,.18);
+    }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    background:linear-gradient(180deg,var(--bg),var(--bg2)); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",system-ui,sans-serif;
+    line-height:1.5; min-height:100dvh;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:14px 14px 96px}
+  header h1{font-size:1.18rem; margin:.2em 0 .1em; letter-spacing:.2px}
+  header p.sub{margin:0 0 .8em; color:var(--ink-dim); font-size:.86rem}
+
+  /* topic chips */
+  .chips{display:flex; gap:8px; overflow-x:auto; padding:6px 2px 10px; scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto; border:1px solid var(--line); background:var(--card);
+    color:var(--ink-dim); padding:9px 14px; border-radius:999px; font-size:.9rem;
+    cursor:pointer; white-space:nowrap; transition:.15s}
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#1a130a; font-weight:600}
+  .chip .cnt{opacity:.7; font-size:.8em; margin-left:5px}
+
+  /* controls */
+  .controls{display:flex; gap:8px; align-items:center; margin:6px 0 12px; flex-wrap:wrap}
+  .search{flex:1 1 180px; display:flex; align-items:center; gap:7px; background:var(--card);
+    border:1px solid var(--line); border-radius:12px; padding:9px 12px}
+  .search input{flex:1; border:0; background:transparent; color:var(--ink); font-size:1rem; outline:none}
+  .search svg{flex:0 0 auto; opacity:.6}
+  .seg{display:flex; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+  .seg button{border:0; background:transparent; color:var(--ink-dim); padding:9px 13px; font-size:.86rem; cursor:pointer}
+  .seg button.on{background:var(--card2); color:var(--ink); font-weight:600}
+  .toolbtn{border:1px solid var(--line); background:var(--card); color:var(--ink-dim);
+    border-radius:12px; padding:9px 12px; font-size:.85rem; cursor:pointer; display:flex; align-items:center; gap:6px}
+  .toolbtn.on{color:var(--accent); border-color:var(--accent-dim)}
+
+  .infonote{background:var(--card2); border:1px solid var(--line); border-left:3px solid var(--accent-dim);
+    border-radius:10px; padding:10px 13px; font-size:.84rem; color:var(--ink-dim); margin:0 0 14px}
+
+  /* FLASHCARD */
+  .deck{display:flex; flex-direction:column; align-items:center; gap:14px}
+  .progress{width:100%; display:flex; align-items:center; gap:10px; color:var(--ink-dim); font-size:.82rem}
+  .bar{flex:1; height:6px; background:var(--card); border-radius:99px; overflow:hidden}
+  .bar i{display:block; height:100%; background:var(--accent); width:0; transition:.25s}
+  .card{width:100%; min-height:230px; background:var(--card); border:1px solid var(--line);
+    border-radius:var(--r); box-shadow:var(--shadow); padding:22px 20px; display:flex; flex-direction:column;
+    cursor:pointer; position:relative; user-select:none}
+  .card .tag{position:absolute; top:12px; right:14px; font-size:.72rem; color:var(--ink-dim); letter-spacing:.5px}
+  .card .warnflag{color:var(--warn); font-weight:700}
+  .card .q{font-size:1.22rem; font-weight:600; margin:6px 0; flex:0 0 auto}
+  .card .reveal-hint{margin-top:auto; color:var(--ink-dim); font-size:.82rem; text-align:center; padding-top:14px}
+  .card .a{margin-top:14px; padding-top:14px; border-top:1px dashed var(--line); font-size:1.05rem; color:var(--ink)}
+  .card .note{margin-top:12px; background:rgba(224,179,65,.12); border:1px solid var(--accent-dim);
+    border-radius:9px; padding:8px 11px; font-size:.82rem; color:var(--warn)}
+  .card.flipped .reveal-hint{display:none}
+
+  .deck-nav{display:flex; gap:10px; width:100%}
+  .deck-nav button{flex:1; border:1px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:12px; padding:13px; font-size:.95rem; cursor:pointer; font-weight:600}
+  .deck-nav button:active{transform:scale(.98)}
+  .deck-nav button.primary{background:var(--accent); border-color:var(--accent); color:#1a130a}
+  .know{display:flex; gap:10px; width:100%}
+  .know button{flex:1; border:1px solid var(--line); background:var(--card); border-radius:12px; padding:11px;
+    font-size:.88rem; cursor:pointer; color:var(--ink-dim)}
+  .know button.no{border-color:#7a3b2e} .know button.no:active{background:#7a3b2e22}
+  .know button.yes{border-color:var(--good)} .know button.yes:active{background:#8fb96b22}
+
+  /* QUIZ */
+  .quizq{width:100%; background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); padding:20px; position:relative}
+  .quizq .tag{position:absolute; top:12px; right:14px; font-size:.72rem; color:var(--ink-dim); letter-spacing:.5px}
+  .quizq .warnflag{color:var(--warn); font-weight:700}
+  .quizq .q{font-size:1.18rem; font-weight:600; margin:6px 0 2px}
+  .quiz-opts{display:flex; flex-direction:column; gap:10px; width:100%}
+  .opt{border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:12px;
+    padding:13px 15px; font-size:.98rem; cursor:pointer; text-align:left; line-height:1.42; transition:.12s;
+    display:flex; gap:10px; align-items:flex-start}
+  .opt:active{transform:scale(.992)}
+  .opt .lt{flex:0 0 auto; width:1.5em; height:1.5em; border-radius:7px; background:var(--card2); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:.82rem; font-weight:700; color:var(--ink-dim)}
+  .opt .ot{flex:1}
+  .opt .mk{flex:0 0 auto; font-weight:700; font-size:1.05rem}
+  .opt.correct{border-color:var(--good); background:#8fb96b22}
+  .opt.correct .lt{background:var(--good); color:#14110d; border-color:var(--good)}
+  .opt.wrong{border-color:#a5503e; background:#7a3b2e22}
+  .opt.wrong .lt{background:#a5503e; color:#fff; border-color:#a5503e}
+  .opt.locked{cursor:default}
+  .opt.dim{opacity:.55}
+  .quiz-note{width:100%; background:rgba(224,179,65,.12); border:1px solid var(--accent-dim);
+    border-radius:9px; padding:8px 11px; font-size:.83rem; color:var(--warn)}
+  .score{font-variant-numeric:tabular-nums}
+  .score b{color:var(--good)}
+
+  /* LIST */
+  .list{display:flex; flex-direction:column; gap:10px}
+  .qa{background:var(--card); border:1px solid var(--line); border-radius:13px; overflow:hidden}
+  .qa>summary{list-style:none; cursor:pointer; padding:13px 15px; font-weight:600; font-size:1rem;
+    display:flex; gap:8px; align-items:flex-start}
+  .qa>summary::-webkit-details-marker{display:none}
+  .qa>summary .ix{color:var(--accent-dim); font-variant-numeric:tabular-nums; flex:0 0 auto; font-weight:700; font-size:.92rem}
+  .qa>summary .wf{color:var(--warn)}
+  .qa .body{padding:0 15px 14px 15px; color:var(--ink); border-top:1px solid var(--line); padding-top:12px}
+  .qa .note{margin-top:10px; background:rgba(224,179,65,.12); border:1px solid var(--accent-dim);
+    border-radius:9px; padding:8px 11px; font-size:.83rem; color:var(--warn)}
+  mark{background:var(--accent); color:#1a130a; border-radius:3px; padding:0 2px}
+
+  .empty{text-align:center; color:var(--ink-dim); padding:40px 10px}
+  footer{margin-top:26px; color:var(--ink-dim); font-size:.76rem; text-align:center; opacity:.8}
+
+  @media print{
+    body{background:#fff; color:#000}
+    .chips,.controls,.deck-nav,.know,.progress,.reveal-hint,header p.sub,footer{display:none !important}
+    .qa{break-inside:avoid; border:1px solid #ccc}
+    .qa .body{display:block !important}
+    .card{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Indiai filozófiai iskolák — vizsgakérdések</h1>
+  <p class="sub" id="subtitle"></p>
+</header>
+<div class="chips" id="chips"></div>
+<div class="controls">
+  <label class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+    <input id="q" type="search" placeholder="Keresés a kérdésekben…" autocomplete="off">
+  </label>
+  <div class="seg" id="mode">
+    <button data-mode="card" class="on">🃏 Kártya</button>
+    <button data-mode="quiz">🎯 Teszt</button>
+    <button data-mode="list">📋 Lista</button>
+  </div>
+  <button class="toolbtn" id="warnOnly" title="Csak a becsapós / ellenőrzendő kérdések">⚠ Csak ezek</button>
+</div>
+<div id="view"></div>
+<footer id="foot"></footer>
+</div>
+<script>
+
+/* Indiai filozófiai iskolák — vizsgakérdések, egységes adatfájl.
+   Forrás: a "kérdések" mappa docx/pdf készletei + a tételek PPT-prezentációi.
+   Szerkeszthető: minden kérdés {q: kérdés, a: válasz, warn: igaz ha becsapós/ellenőrzendő, note: megjegyzés}.
+   A "warn" jelölésű tételek a tanár által emlegetett "becsapós" kérdések vagy a deckeken kívülről pótolt válaszok — érdemes átnézni. */
+
+const QUESTIONS = {
+  meta: {
+    title: "Indiai filozófiai iskolák — vizsgakérdések",
+    intro: "Egységesített tanulóanyag a hat ortodox darsana (njája-vaisésika, szánkhja-jóga, védánta-mímánszá) vizsgájához. Témakörönkénti kérdés-válasz párok, kereséssel és flashcard-móddal.",
+    szobeliNote: "Tanári megjegyzés: „Összegyűjtöttem egy csokorra való vizsgakérdést a darsana szóbelire. Nagyjából ezekből fogunk szemezgetni (persze nem mindegyikből). Mindegyikre megtaláljátok a választ az oktató-videókban és a PPT-prezentációkban. Vigyázzatok, vannak bennük becsapós kérdések is! Javaslom, alakítsatok kisebb csoportokat, és együtt tanuljatok.” — A ⚠ jelű kérdések becsapósak vagy a PPT-kből pótolt válaszúak, ezeket nézd át."
+  },
+  topics: [
+    {
+      id: "darsana",
+      name: "Darsana — alapok",
+      items: [
+        { q: `Mit jelent a darsana szó?`, a: `meglátás, látásmód, irányzat (dris = látni); hindu filozófiai iskola` },
+        { q: `Hány ortodox darsana-iskola van?`, a: `hat` },
+        { q: `Mi a nevük?`, a: `njája-vaisésika, szánkhja-jóga, védánta-mímánszá` },
+        { q: `Mik az alap-premisszáik?`, a: `a Véda isteni kinyilatkoztatás; létezik a halhatatlan, újraszülető lélek; a földi lét szenvedés; a karma törvénye; létezik megszabadulás` },
+        { q: `Mi inspirálta az egzakt hindu iskolák kialakulását?`, a: `görög hatás, a logikailag felépített buddhista iskolák, az abhidhamma` },
+        { q: `Milyen hindu alapokra épülnek a darsanák?`, a: `bráhmanikus tanok, upanisadok` },
+        { q: `Mi a darsana iskolák célja?`, a: `a földi létből való megszabadulás` },
+        { q: `Mit jelent a njája szó?`, a: `levezetés, okfejtés, logika („érvelők”)` },
+        { q: `Mit jelent a vaisésika szó?`, a: `megkülönböztetés („megkülönböztetők”)` },
+        { q: `Mit jelent a szánkhja szó?`, a: `számbavétel, számvetés („számbavevők”)` },
+        { q: `Mit jelent a jóga szó?`, a: `megkötés, igázás („igázók”)` },
+        { q: `Mit jelent a védánta szó?`, a: `a tudás (vagy a Védák) vége — az upanisadok` },
+        { q: `Mit jelent a mímánszá szó?`, a: `vizsgálat, vizsgálódás („vizsgálók”), ritualisztika` },
+        { q: `Mik a darsana iskolák alapművei?`, a: `szútrák` },
+        { q: `Mi a darsana szútrák jellemzője?`, a: `rövid, tömör, fejből megtanulandó szövegek` }
+      ]
+    },
+    {
+      id: "vaisesika",
+      name: "Vaisésika",
+      items: [
+        { q: `Hány alapkategóriája van a vaisésikának?`, a: `hat` },
+        { q: `Melyek ezek?`, a: `szubsztancia, tulajdonság, mozgás, egyetemes, egyedi, inherencia` },
+        { q: `Mi a vaisésika öndefiníciója?`, a: `az alapkategóriák azonosságának és különbözőségének lényegi tudása` },
+        { q: `Miért fontos ez?`, a: `mert az alapkategóriák (ezen belül a szubsztanciák) összetévesztése vezet a szenvedéshez` },
+        { q: `Hogyan nevezi a vaisésika a saját végcélját?`, a: `a lélek felemelkedése (abhjudaja), illetve elválása (apavarga) a többi szubsztanciától` },
+        { q: `Mit jelent a padártha szó?`, a: `a szó (fogalom) igazi jelentése, pontos definíció; alapkategória` },
+        { q: `Melyik a legfontosabb alapkategória, ami nélkül a többi sem értelmezhető?`, a: `a szubsztancia (szubsztanciák)` },
+        { q: `Létezhet-e tulajdonság, mozgás szubsztancia nélkül?`, a: `nem` },
+        { q: `Létezhet-e szubsztancia mozgás nélkül?`, a: `igen, például az űr (ákása)` },
+        { q: `Hány szubsztancia létezik?`, a: `kilenc` },
+        { q: `Melyek ezek?`, a: `föld, víz, tűz, levegő, űr, tér, idő, elme, lélek` },
+        { q: `Melyek épülnek fel ezek közül atomokból?`, a: `föld, víz, tűz, levegő` },
+        { q: `Mik a föld elem érzékszervileg tapasztalható tulajdonságai?`, a: `szagolható, ízlelhető, látható, tapintható` },
+        { q: `Mik a víz elem érzékszervileg tapasztalható tulajdonságai?`, a: `ízlelhető, látható, tapintható` },
+        { q: `Mik a tűz elem érzékszervileg tapasztalható tulajdonságai?`, a: `látható, tapintható` },
+        { q: `Mik a levegő elem érzékszervileg tapasztalható tulajdonságai?`, a: `tapintható` },
+        { q: `Mik az űr (ákása) jellemzői?`, a: `oszthatatlan, mérettelen; ez tartalmazza a többi szubsztanciát, és teszi lehetővé a mozgást (és a hang terjedését)` },
+        { q: `Mik a tér (dis) jellemzői?`, a: `ez határozza meg a jelenségek helyét, méretét, mozgásának irányát` },
+        { q: `Mik az elme-szubsztancia tulajdonságai?`, a: `vágy, viszolygás, öröm, szenvedés, akarat, megismerés` },
+        { q: `Az elme tulajdonságai hogyan viszonyulnak a lélekhez?`, a: `annak jelei (ugyanezek a lélek/átman jelei is)` },
+        { q: `Mi a különbség a jel (linga) és a tulajdonság között?`, a: `a tulajdonság egy szubsztanciához tartozik; a jel egy nem tapasztalható jelzettre (lingin) utal` },
+        { q: `Mondj egy példát a jel és a jelzett kapcsolatára!`, a: `trombitálás és csörtetés — elefánt van a bozótban` },
+        { q: `Mit jelent a karma szó a vaisésikában?`, a: `mozgás`, warn: true, note: `Becsapós: itt a karma NEM „tett/cselekvés”, hanem mozgás.` },
+        { q: `Mik a mozgás alfajai?`, a: `felfelé, lefelé, ide-oda (horizontális), táguló, sűrűsödő` },
+        { q: `Mit jelent a számánja szó?`, a: `egyetemes, közös — az egymáshoz hasonló jelenségek halmaza (pl. minden ember)` },
+        { q: `Mit jelent a visésa szó?`, a: `egyedi, különleges — a nagyobb csoporton belül megkülönböztető ismérv alapján leszűkített halmaz (pl. a nők)` },
+        { q: `Mit jelent a szamavája szó?`, a: `inherencia, szétválaszthatatlan összetartozás (pl. tulajdonság és szubsztancia között)` },
+        { q: `Mi a „feltétele” a térnek és az időnek?`, a: `a mozgás` },
+        { q: `Melyik a 7., utólag hozzágondolt alapkategória?`, a: `a nemlét (abháva)` },
+        { q: `Mik az űr (ákása) jelei?`, a: `tágulás, sűrűsödés, a hang terjedése` },
+        { q: `Mik az idő jelei?`, a: `időhatározós szavak: „most”, „már”, „majd” stb.` },
+        { q: `Mik a tér (dis) jelei?`, a: `helyhatározó szavak: „itt”, „ott”, „erre”, „arra” stb.` },
+        { q: `Mi az elme jele?`, a: `hogy nem egyszerre történnek a megismerések` },
+        { q: `Mi lehet a szubsztancia okozata?`, a: `csak szubsztancia (agyagból korsó)` },
+        { q: `Mi lehet egy tulajdonság okozata?`, a: `csak tulajdonság` },
+        { q: `Keveredhetnek-e a tulajdonságok?`, a: `igen` },
+        { q: `Átveheti-e egy szubsztancia egy másik szubsztancia tulajdonságát?`, a: `igen, pl. felmelegszik vagy lehűl (a tűz felmelegíti a vizet)` },
+        { q: `Mi a mozgás oka?`, a: `kapcsolat vagy szétválás` },
+        { q: `Erre egy példa?`, a: `a mozgó levegő megmozgatja a leveleket; egy ág eltörik a hó súlya miatt` },
+        { q: `Mi a mozgás okozata?`, a: `újabb kapcsolat` },
+        { q: `Erre egy példa?`, a: `a kő leesik, és ott marad` },
+        { q: `Mi a hang oka?`, a: `kapcsolat vagy szétválás` },
+        { q: `Erre egy példa?`, a: `a dobverő megüti a dobot; az ág reccsen, amikor eltörik` },
+        { q: `Mi mozoghat?`, a: `ami nem végtelen, vagy aminek részei vannak` },
+        { q: `Erre egy példa?`, a: `az antilop elfut; a levegő (hideg, meleg) részei keverednek` },
+        { q: `Melyek a bizonyosan mozgó szubsztanciák?`, a: `a lételemek, valamint az elme (az elme a leggyorsabb)` },
+        { q: `Közvetlenül a szubsztanciákat tapasztaljuk-e?`, a: `nem, hanem a tulajdonságaikat vagy a jeleiket` },
+        { q: `Melyek a vaisésika mérvadó megismerési formái (pramánái)?`, a: `érzékszervi tapasztalás (pratjaksa) és következtetés (anumána)` },
+        { q: `Mit jelent a buddhi a vaisésikában?`, a: `egy megismerési pillanat` },
+        { q: `Hogyan megy ez végbe?`, a: `lélek — elme — érzékszerv — érzéktárgy (a kapcsolatok láncolata)` }
+      ]
+    },
+    {
+      id: "njaja",
+      name: "Njája",
+      items: [
+        { q: `Mit jelent a njája kifejezés?`, a: `levezetés, irányított gondolkodás, logika` },
+        { q: `Mi inspirálta a hindu logika kialakulását?`, a: `görög hatás, buddhista rendszerek` },
+        { q: `Mik a njája mérvadó megismerési formái?`, a: `érzékszervi tapasztalás, következtetés, társítás (upamána), hiteles közlés / bizonyos szó (sabda)` },
+        { q: `Melyek a njája legfontosabb alapkategóriái?`, a: `mérvadó megismerési formák, megismerendők, „kutatás” (tarka), megvitatás (váda)` },
+        { q: `Mi volt a njája leggyakoribb praxisa?`, a: `a megvitatás (váda)` },
+        { q: `Hány tagú a hindu szillogizmus?`, a: `öt: állítás, érvelés, példa, átkötés, konklúzió` },
+        { q: `Mikor hibás egy következtetés?`, a: `ha az állítás és az érvelés között nincs vjápti` },
+        { q: `Mit jelent a vjápti terminus?`, a: `szétszakíthatatlan és kicserélhetetlen együttjárás` },
+        { q: `Mire irányulhat kizárólag egy helyes ellenérv?`, a: `hogy bizonyított-e a vjápti, avagy nem` },
+        { q: `Mi a két leggyakoribb hibás ellenérv?`, a: `az ellenállítás és a példába való belekötés` },
+        { q: `Mi zavarja meg a tiszta gondolkodást?`, a: `a vágy, a viszolygás és a tompaság` },
+        { q: `Hogyan lehet a njája szerint elérni a megszabadulást?`, a: `a szenvedés–születés–karmikus cselekvés–hiba–félreértés sorozatából a félreértést és a hibát kell kiküszöbölni` },
+        { q: `Mondj néhány esetet, amikor az egyik fél elveszíti a vitát!`, a: `ha háromszori ismétlés után sem érti, amit a másik állít; ha értelmetlen szavakat kever az érvelésbe; vagy ha nem tud kivédeni egy támadást, és azzal vág vissza: „ezt a hibát te is elkövetted korábban”` },
+        { q: `Milyen fogalmi keretek között zajlik az érvelés és a vita?`, a: `be kell tartani az elfogadott premisszákat és tantételeket` },
+        { q: `Mik a njája elfogadott tantételei?`, a: `voltaképpen a vaisésika teljes rendszere` },
+        { q: `Mit jelent a buddhi terminus a njájában?`, a: `felismerés, megismerés, megértés` },
+        { q: `Mi szükséges egy buddhihoz a tapasztalásban?`, a: `a lélek, az elme, az érzékszerv és az érzéktárgy egybeesése` },
+        { q: `Mondj egy öttagú levezetést!`, a: `Ebben a kertben kutya van (állítás). Mert ugatást hallok (érvelés). A kutya és az ugatás úgy tartozik össze, mint a macska és a nyávogás (példa). Tehát (átkötés). Ebben a kertben kutya van, mert ugatást hallok (konklúzió).` },
+        { q: `Hogyan indul egy kutatás?`, a: `fel kell vetni egy kétséget, majd bizonyítási folyamattal feloldani. Pl.: Szenved-e a lélek? Tegyük fel, hogy igen. De ha a lélek is szenved, nincs megszabadulás — ami viszont elfogadott premissza. Tehát nem a lélek szenved.` },
+        { q: `Mik a megismerendők?`, a: `lélek, elme, megismerés, érzékszerv, érzéktárgy, hiba, karmikus tett, újraszületés, eloldódás` },
+        { q: `Mi az alapvető különbség a njája és Nágárdzsuna mahájána logikája között?`, a: `Nágárdzsuna a logika eszközével akarja meghaladni magát a logikát, míg a njája megmarad a hagyományos logikai kereteken belül` }
+      ]
+    },
+    {
+      id: "szankhja",
+      name: "Szánkhja",
+      items: [
+        { q: `Mit jelent a szánkhja kifejezés?`, a: `számolás, számban tartás, számvetés` },
+        { q: `Mi az alapműve?`, a: `Szánkhja-káriká (Ísvarakrisna)` },
+        { q: `Mi a Purusa?`, a: `Lélek, Alany („Ember”); a szellemi, tudatos, nem-termő „tanú”` },
+        { q: `Mi a Prakriti?`, a: `Természet („Őseredet”, pradhána); a termő, öntudatlan, minőséges princípium` },
+        { q: `A Purusa teremti-e a Prakritit, vagy fordítva?`, a: `egyik sem — egymástól függetlenül léteznek (dualizmus)` },
+        { q: `Mi a Prakriti két állapota?`, a: `megnyilvánult és megnyilvánulatlan` },
+        { q: `Mit teremt a Purusa?`, a: `semmit — csak a Prakriti teremt` },
+        { q: `Mondj pár hasonlatot a Purusa és a Prakriti kapcsolatára!`, a: `táncosnő; béna és vak; tehén és borja; zseblámpa; futballstadion` },
+        { q: `Mi a buddhi?`, a: `Eszmélet, értelem, végső felfogás, intelligencia (mahat)` },
+        { q: `Mi az ahankára?`, a: `én-csináló, énképzet; az individuum képzője, karakter, jellem` },
+        { q: `Mi a manasz?`, a: `ész, elme, gondolkodás` },
+        { q: `Mik a tanmátrák?`, a: `érzékbenyomások / finom elemek: kép, hang, íz, szag, tapintásérzet` },
+        { q: `Mi az öt cselekvő szerv?`, a: `beszéd, megfogás (kéz), helyváltoztatás (járás), ürítés, szaporodás` },
+        { q: `Mi a Purusa két alternatívája a Prakriti felé?`, a: `vagy tapasztalja (bhóga), vagy elfordul és megszabadul (kaivalja)` },
+        { q: `Mi a guna terminus jelentéskülönbsége a szánkhjában és a vaisésikában?`, a: `a vaisésikában a szubsztanciák tulajdonsága; a szánkhjában a Prakriti három minősége`, warn: true, note: `Becsapós: a guna a két iskolában mást jelent!` },
+        { q: `Mi a három minőség (guna)?`, a: `szattva (világos, fényes, tudatos), radzsasz (mozgató, energikus, kötődő), tamasz (homályos, sötét, elfedő)` },
+        { q: `Tudatos-e a Természet?`, a: `nem — a Purusától nyeri a tudatosságát` },
+        { q: `Mi a Prakriti célja?`, a: `egyre magasabb szintű megismerés biztosítása (végül a Purusa megszabadulása)` },
+        { q: `Mi a „finom test”?`, a: `a halál után leválnak a lételemek és a cselekvő szervek, a többi tattva együtt marad — ez reinkarnálódik` },
+        { q: `Mit jelent a tattva szó?`, a: `lényegi valóság/létező; a szánkhjában 25 ilyen van` },
+        { q: `Mik a szánkhja mérvadó megismerési forrásai?`, a: `érzékszervi tapasztalás, következtetés, hiteles beszéd (hagyomány)` },
+        { q: `Melyik gyógyászati rendszer alakult ki szánkhja gyökerekből?`, a: `az ájurvéda` },
+        { q: `Mi az énképzet (ahankára) funkciója?`, a: `kisajátítás, magához vétel` },
+        { q: `Mi az eszmélet (buddhi) funkciója?`, a: `végső felfogás, értelmezés` },
+        { q: `Mi az elme (manasz) funkciója?`, a: `gondolkodás, belső képalkotás, az érzékszervek összekapcsolása` }
+      ]
+    },
+    {
+      id: "joga",
+      name: "Jóga",
+      items: [
+        { q: `Mit jelent a jóga kifejezés?`, a: `igázás, gúzsbakötés` },
+        { q: `Mi az alapműve?`, a: `Patandzsali: Jóga-szútra` },
+        { q: `Mi Patandzsali jóga-definíciója?`, a: `A jóga a tudatfolyamatok lebírása (csitta-vritti niródha).` },
+        { q: `Miért kell a tudatfolyamatokat lebírni?`, a: `mert szenvek (klésák) gerjesztik őket` },
+        { q: `Mik a szenvek?`, a: `nemtudás, vágy, viszolygás (gyűlölés), önösség, életösztön (élni akarás)` },
+        { q: `Mi a szenvek eredete?`, a: `nincs nekik — öröktől fogva vannak` },
+        { q: `Hol kapcsolódik a szenvek tana a Buddha-Dhammához?`, a: `voltaképpen a három rossz gyökérokkal azonosak` },
+        { q: `Hogyan határoznád meg a Jóga-szútra műfaját?`, a: `voltaképpen meditációs tankönyv` },
+        { q: `Miért nem foglalkozik a Jóga-szútra lételméleti kérdésekkel?`, a: `mert úgy tekinti, azt a szánkhja már tisztázta` },
+        { q: `Mi a csitta?`, a: `tudat` },
+        { q: `Hogyan kapcsolódik a csitta a szánkhja fogalmaihoz?`, a: `a buddhi, az ahankára és a manasz együttese` },
+        { q: `Mik a tudatfolyamatok?`, a: `megismerés, tévedés, képzeletműködés, elalvás, emlékezés` },
+        { q: `Mik a mérvadó megismerési formák?`, a: `érzékszervi tapasztalás, következtetés, hagyomány (a mester/tanító útmutatása)` },
+        { q: `Mi a jóga jelzője Patandzsali rendszerében?`, a: `nyolcrétű (valószínűleg buddhista hatás)` },
+        { q: `Mi a nyolc jóga-tag?`, a: `megtartóztatás (jama), erény (nijama), testhelyzet (ászana), lélegzetirányítás (pránájáma), az érzékszervek uralma (pratjáhára), összpontosítás (dháraná), elmélyedés (dhjána), révület (szamádhi)` },
+        { q: `Mi az öt jama?`, a: `nemártás (ahínszá), igazság (szatja), nem-elvétel (asztéja), szexuális önmegtartóztatás (brahmácsárja), nem-ragaszkodás (aparigraha)` },
+        { q: `Mi az öt nijama?`, a: `gyermeki tisztaság (saucsa), elégedettség (szantósa), kiégetés/aszkézis (tapasz), önképzés (szvádhjája), odaadás az Úrnak (ísvara-pranidhána)` },
+        { q: `Hogyan definiálja Patandzsali az Istent (Ísvarát)?`, a: `a szenves (karmikus) tettek terméseinek hajlamától megtisztult, elkülönült Lélek (Purusa)` },
+        { q: `Hogyan definiálja Patandzsali az erkölcsi alapelveket?`, a: `úgy, hogy ismerteti, mi lesz a betartásuk eredménye. Pl. a nemártáson alapulók közvetlen tapasztalásában eltűnik az ellenségeskedés.` },
+        { q: `Mi az erkölcsi alapelvek célja?`, a: `hogy alkalmassá tegyék a tudatot a révület elérésére — egyébként minden jóga-tag célja ez` },
+        { q: `Mi a lélegzet-vezetés (pránájáma) elsődleges célja?`, a: `hogy elcsendesítse, letisztítsa az elmét` },
+        { q: `Mi a szamádhi definíciója?`, a: `az az állapot, amikor a tapasztaló, a tapasztalás és a tapasztalt eggyé válik` },
+        { q: `Mi az elmélyedés állapotára hozott legismertebb hasonlat?`, a: `az átlátszó ékkő, ami látszólag tükrözi annak színét, amire helyezik, de nem marad benne a szín` },
+        { q: `Mi a szamádhi egyes fokozatainak lényege?`, a: `hogy egyre inkább eltűnnek belőlük a tudatfolyamatok — nagyon hasonlóan a buddhista meditációhoz` },
+        { q: `Mi a szamádhi első szintje?`, a: `a gondolkodással még együtt való (szavitarka) szamádhi` },
+        { q: `Mi a szamádhi legmélyebb állapota?`, a: `a „mag nélküli” (nirbídzsa) szamádhi, amelyben az utolsó ösztönzések, késztetőerők (szanszkárák) is eltűnnek` }
+      ]
+    },
+    {
+      id: "szobeli",
+      name: "Szóbeli kérdésbank",
+      isSzobeli: true,
+      items: [
+        { q: `Mit jelent a jóga szó, és mire vonatkozik a jelentése?`, a: `igázás, megkötés, gúzsba kötés — a tudatfolyamatok megfékezésére, „igázására” utal` },
+        { q: `Mit jelent a szánkhja szó, és mire vonatkozik a jelentése?`, a: `számbavétel, számolás, számvetés — a lényegi létezők (25 tattva) számba vételére utal` },
+        { q: `Mit jelent a vaisésika szó, és mire vonatkozik a jelentése?`, a: `megkülönböztetés — az alapkategóriák (padárthák) megkülönböztetésére utal` },
+        { q: `Mit jelent a njája szó, és mire vonatkozik a jelentése?`, a: `levezetés, irányított gondolkodás, logika — a helyes okfejtésre, érvelésre utal` },
+        { q: `Mit jelent a védánta szó, és mire vonatkozik a jelentése?`, a: `a Védák vége / a tudás vége — az upanisadokra (a Véda záró, bölcseleti részére) utal` },
+        { q: `Mit jelent a mímánszá szó, és mire vonatkozik a jelentése?`, a: `vizsgálat, vizsgálódás — a védai rítus és szövegek értelmezésére (ritualisztikára) utal` },
+        { q: `Mit tekintünk a jóga alapművének, és ki a szerzője?`, a: `Jóga-szútra, szerzője Patandzsali` },
+        { q: `Mit tekintünk a szánkhja alapművének, és ki a szerzője?`, a: `Szánkhja-káriká, szerzője Ísvarakrisna` },
+        { q: `Mit tekintünk a njája alapművének, és ki a szerzője?`, a: `Njája-szútra, szerzője Gótama (Akapáda Gótama)` },
+        { q: `Mit tekintünk a vaisésika alapművének, és ki a szerzője?`, a: `Vaisésika-szútra, szerzője Kanáda` },
+        { q: `Mit jelent a padártha kifejezés?`, a: `„a szó (igazi) jelentése” — az, ami megnevezhető; alapkategória` },
+        { q: `Mit jelent a vjápti kifejezés?`, a: `szétszakíthatatlan és kicserélhetetlen együttjárás — az állítás és az érvelés közti inherens kapcsolat` },
+        { q: `Mit jelent a szamádhi kifejezés?`, a: `révület — az az állapot, amikor a tapasztaló, a tapasztalás és a tapasztalt eggyé válik` },
+        { q: `Mit jelent a guna kifejezés a vaisésikában?`, a: `tulajdonság (a szubsztancia tulajdonsága)` },
+        { q: `Mit jelent a guna kifejezés a szánkhjában?`, a: `a Prakriti három minősége: szattva, radzsasz, tamasz`, warn: true, note: `Becsapós: a guna a vaisésikában „tulajdonság”, itt „minőség”.` },
+        { q: `Mit jelent a darsana kifejezés?`, a: `meglátás, látásmód, nézet (dris = látni); hindu filozófiai iskola` },
+        { q: `Mit jelent a Purusa kifejezés?`, a: `Lélek, Alany, „Ember” — a szellemi, tudatos, nem-termő tanú` },
+        { q: `Mit jelent a Prakriti kifejezés?`, a: `Természet, „Őseredet” (pradhána) — a termő, öntudatlan, minőséges (anyagi-tudati) princípium` },
+        { q: `Mit jelent az advaita kifejezés?`, a: `„nem-kettő” — a védánta nem-dualista irányzata (Brahman = Átman, az anyagi világ illúzió)` },
+        { q: `Mi a védánta két fő irányzata?`, a: `advaita (nem-dualista) és dvaita (dualista) védánta` },
+        { q: `Mit jelent a sruti kifejezés?`, a: `„hallott”, kinyilatkoztatott szentirat — a Véda (szemben a smritivel, a hagyományozott szövegekkel)`, warn: true, note: `A deckeken kívülről pótolt válasz — ellenőrizd.` },
+        { q: `Mit jelent a karma kifejezés a vaisésikában?`, a: `mozgás`, warn: true, note: `Becsapós: itt a karma NEM „tett”, hanem mozgás.` },
+        { q: `Ismerhette-e a Buddha a vaisésika rendszerét?`, a: `Nem. A vaisésika (kb. Kr.e. 2. – Kr.u. 3-4. sz.) jóval a Buddha után, részben a buddhista abhidhamma hatására alakult ki.`, warn: true, note: `Becsapós — időrendi csapda.` },
+        { q: `Ismerhette-e Patandzsali az abhidhamma rendszerét?`, a: `Igen, valószínűleg. A jóga nyolcrétűsége és a szamádhi-tan buddhista hatást mutat; a darsanák az abhidhamma után alakultak.`, warn: true, note: `Időrendi/hatás-kérdés — ellenőrizd.` },
+        { q: `Mely körülmények inspirálták a darsanák kialakulását?`, a: `az egzakt buddhista filozófia (abhidhamma) és a vitaképesség igénye; az upanisadok tanai; a „hindu reneszánsz” önmeghatározási igénye; az archaikus iskolák (szánkhja, jóga) rendszeralkotó törekvése; a görög filozófia hatása` },
+        { q: `Mit jelent az ahankára kifejezés?`, a: `„én-csináló”, énképzet — az individuum/jellem képzője (a szánkhja egyik tattvája)` },
+        { q: `Mit jelent a manasz kifejezés?`, a: `elme, ész, gondolkodás — az érzékszerveket összekapcsoló belső szerv` },
+        { q: `Szubsztancia, mert mozog. Igaz-e?`, a: `Nem helytálló. A mozgás nem teszi szubsztanciává — mozgás csak szubsztanciához tartozhat, de a „mert mozog” nem bizonyítja a szubsztancia-létet (pl. az űr szubsztancia, mégsem mozog). Hibás vjápti.`, warn: true, note: `Becsapós érvelés-vizsgálat.` },
+        { q: `Tulajdonság, mert mozog. Igaz-e?`, a: `Nem. A tulajdonság (guna) maga nem mozog; a mozgás (karma) külön alapkategória, és szubsztanciához tartozik, nem tulajdonsághoz.`, warn: true, note: `Becsapós érvelés-vizsgálat.` },
+        { q: `Mit jelent az egyedi és az egyetemes kifejezés a vaisésikában?`, a: `egyetemes (számánja): több jelenség közös csoportja hasonlóság alapján (pl. minden ember); egyedi (visésa): a nagyobb csoporton belül megkülönböztető ismérv alapján leszűkített csoport (pl. a nők)` },
+        { q: `Mik a njája-vaisésika pramánái (mérvadó megismerési formái)?`, a: `a vaisésika kettőt fogad el: érzékszervi tapasztalás (pratjaksa) és következtetés (anumána); a njája ehhez még kettőt: társítás (upamána) és bizonyos szó (sabda).`, warn: true, note: `Trükk: a kettő száma eltér — vaisésika 2, njája 4.` },
+        { q: `Mik a szánkhja-jóga pramánái?`, a: `érzékszervi tapasztalás, következtetés, megbízható/hiteles beszéd (hagyomány) — három` },
+        { q: `Mely premisszákban egyezik meg a buddhista és a hindu filozófia?`, a: `újraszülető létezés; a karma törvénye; a földi lét szenvedés; létezik megszabadulás` },
+        { q: `Mely premisszákban nem egyezik a buddhista és a hindu filozófia?`, a: `a hindu iskolák szerint a Véda isteni kinyilatkoztatás, és létezik az örök Lélek (Átman); a buddhizmus mindkettőt tagadja (anattá; a Védát nem fogadja el kinyilatkoztatásként).`, warn: true, note: `Kulcskülönbség — érdemes pontosan tudni.` },
+        { q: `Mit jelent a csitta kifejezés?`, a: `tudat (a jóga rendszerében)` },
+        { q: `Mit jelent a csitta-vritti kifejezés?`, a: `tudatfolyamat (a tudat hullámzása/működése); a jóga célja ezek megszüntetése (niródha)` },
+        { q: `Mi a különbség az űr és a tér szubsztanciái között a vaisésika rendszerében?`, a: `űr (ákása): oszthatatlan, mérettelen, ez tartalmazza a többit és teszi lehetővé a mozgást/hangterjedést; tér (dis): a jelenségek helyét, irányát, méretét határozza meg (itt/ott, égtájak)` },
+        { q: `Mondj egy helyes, öt tagú okfejtést!`, a: `A hang mulandó (állítás), mert keletkezik (érvelés), éppúgy, mint a keletkezett szappanbuborék (példa), ezért tehát (átkötés), a hang keletkezett volta miatt mulandó (végkövetkeztetés).` },
+        { q: `Mit jelent az ászana kifejezés?`, a: `testhelyzet, ülésmód (a jóga 3. tagja) — szilárd és kényelmes` },
+        { q: `Mit jelent a pránájáma kifejezés?`, a: `lélegzetvezetés, lélegzetirányítás (a jóga 4. tagja) — a lélegzet visszafogása, célja az elme elcsendesítése` },
+        { q: `Mely szubsztanciák atomiak a vaisésika rendszerében?`, a: `föld, víz, tűz, levegő` },
+        { q: `Mely iskola állítja: a helyes megkülönböztetés által lehet elérni a megszabadulást?`, a: `a szánkhja (a Purusa és a Prakriti/tattvák megkülönböztető megismerése, viveka)`, warn: true, note: `Figyelj: a vaisésika is „megkülönböztet”, de a megszabadító megkülönböztető megismerés a szánkhja tézise.` },
+        { q: `Mely iskola állítja: a tudatfolyamatok leküzdése által lehet elérni a megszabadulást?`, a: `a jóga` },
+        { q: `Mely iskola állítja: a Brahman megismerése által lehet elérni a megszabadulást?`, a: `a védánta` },
+        { q: `Mi a kapcsolat az upanisadok és a darsana iskolák között?`, a: `az upanisadok (a késő-védikus, bráhmanikus tanok) képezik a darsanák hindu alapját; a védánta közvetlenül az upanisadokra épül` },
+        { q: `Mit jelent a tanmátra kifejezés a szánkhjában?`, a: `érzékbenyomás / finom elem (kép, hang, íz, szag, tapintásérzet), amiből a durva lételemek lesznek` },
+        { q: `Mit jelent a buddhi kifejezés a szánkhjában?`, a: `Eszmélet, értelem, végső felfogás (mahat) — a Prakriti első, legfinomabb terméke` },
+        { q: `Mi a jóga nyolc „tagja” (astánga)?`, a: `jama, nijama, ászana, pránájáma, pratjáhára, dháraná, dhjána, szamádhi` },
+        { q: `Mondj két hasonlatot a Purusa és a Prakriti kapcsolatára!`, a: `a béna (Purusa: lát, de nem cselekszik) és a vak (Prakriti: cselekszik, de nem lát); a táncosnő (Prakriti), aki eltáncol a néző (Purusa) előtt, majd lelép` },
+        { q: `Miért hiba belekötni a példába?`, a: `mert a példa csak illusztráció, nem bizonyító erejű; a bizonyítás a vjáptin áll. Pl. „az öröm az elme tulajdonsága, mint a szürke szín az elefánté” – „de vannak fehér elefántok is” – ez hibás ellenvetés.` },
+        { q: `Miért hiba az ellenállítás?`, a: `mert nem cáfolja az ellenfél állítását, csak egy ellentétes állítást szegez vele szembe → állítások-ellenállítások végtelen sorozatához vezet (pl. „az elme apró” / „hatalmas”). A helyes ellenérv a vjáptit célozza.` },
+        { q: `Említs három, a vitában elkövethető hibát!`, a: `szócsavarás (kiforgatás, ködösítés, szőrszálhasogatás); hibás ellenvetés (pl. ellenállítás, példába kötés); elcsúszás (pl. válaszképtelenség, értelmetlen beszéd)` },
+        { q: `Mondj egy hibás öttagú okfejtést!`, a: `„Mozog, tehát élőlény.” – nincs vjápti, mert élettelen dolgok is mozognak (pl. a hullámok). Hasonlóan hibás: „hosszú hajú, tehát nő.”` },
+        { q: `Mondj három inherens kapcsolatot a vaisésika rendszerében!`, a: `szubsztancia és tulajdonság között; szubsztancia és mozgás között; az egyetemes és az egyedi között (továbbá: az atomok között, a rész és az egész között, az állítás és a helyes érvelés között)` },
+        { q: `Mik az elme-szubsztancia tulajdonságai a vaisésika rendszerében?`, a: `vágy, viszolygás, öröm, szenvedés, akarat, megismerés (egyben a lélek jelei is)` },
+        { q: `Miért fontos a jel és a jelzett kapcsolata?`, a: `mert a következtetés (a nem-tapasztalt megismerése) a jeltől (linga) a jelzett (lingin) felé halad, és köztük inherens kapcsolat van. Pl. trombitálás + csörtetés → elefánt.` },
+        { q: `Mit jelent a kaivalja kifejezés?`, a: `„egyedülvalóság” — a végső megszabadulás (a Purusa elkülönülése a Prakrititől) a szánkhja-jógában` },
+        { q: `Mit jelent az apavarga kifejezés?`, a: `elválás, megszabadulás — a lélek elkülönülése a többi szubsztanciától (a vaisésika-njája végcélja)` },
+        { q: `Melyik iskola alaptanítása: A Brahman az Átman?`, a: `az (advaita) védánta` },
+        { q: `Mit jelent az Ísvara kifejezés?`, a: `az Úr/Isten — a jógában a karmikus tettek terméseitől megtisztult, elkülönült Lélek (Purusa), az odaadás (ísvara-pranidhána) tárgya` },
+        { q: `Mit jelent a szattva kifejezés?`, a: `a Világos minőség: könnyű, fényes, láttató, tudatos (a szánkhja egyik gunája)` },
+        { q: `Mit jelent a radzsasz kifejezés?`, a: `a Ragaszkodó/mozgató minőség: energikus, mozgékony, támaszkodó` },
+        { q: `Mit jelent a tamasz kifejezés?`, a: `a Homályos minőség: nehéz, sötét, elfedő, tompító` },
+        { q: `Mit jelent a tattva kifejezés?`, a: `lényegi valóság/létező; a szánkhjában 25 ilyen van` },
+        { q: `Sorold fel a szánkhja 25 tattváját!`, a: `1. Purusa; 2. Prakriti; 3. buddhi/mahat; 4. ahankára; 5. manasz; 6–10. az öt érzékelő képesség (látás, hallás, szaglás, ízlelés, tapintás); 11–15. az öt cselekvő szerv (beszéd, megfogás, járás, ürítés, szaporodás); 16–20. az öt tanmátra (kép/szín, hang, szag, íz, tapintásérzet); 21–25. az öt durva lételem (föld, víz, tűz, levegő, űr)` },
+        { q: `Mit jelent a dvaita-védánta kifejezés?`, a: `a dualista védánta — a lélek és Brahman/Isten különbözőségét vallja, szemben az advaitával` },
+        { q: `Mi az öt szenv a jóga rendszerében?`, a: `nemtudás (avidjá), önösség (aszmitá), vágy (rága), gyűlölés (dvésa), élni akarás / életösztön (abhinivésa)` },
+        { q: `Mi az öt tudatfolyamat a jóga rendszerében?`, a: `megismerés (pramána), tévedés (viparjaja), képzelgés (vikalpa), elalvás (nidrá), emlékezés (szmriti)` },
+        { q: `Mit jelent az avidjá kifejezés?`, a: `nemtudás — a többi szenv talaja; a mulandót öröknek, a tisztátalant tisztának, a szenvedéstelit örömtelinek látni` },
+        { q: `Hol a hiba? A) A lélek örök, mert szubsztancia. B) A lélek nem örök, mert a halál után elszáll a testből.`, a: `A) helytálló (a szubsztanciák örökkévalók). B) hibás: az elszállás (mozgás) nem cáfolja az örökkévalóságot — a lélek a halálkor kiszáll, de attól még örök. B) összekeveri az örökkévalóságot a mozdulatlansággal.`, warn: true, note: `Becsapós érvelés-vizsgálat.` },
+        { q: `Hol a hiba? A hang szubsztancia, mert vannak tulajdonságai.`, a: `Hibás. A hang nem szubsztancia, hanem jel (az űr jele): oka kapcsolat vagy szétválás. Ha szubsztancia lenne, örök és önálló volna — de a hang keletkezik és elmúlik.`, warn: true, note: `Becsapós érvelés-vizsgálat.` },
+        { q: `Mely iskolá(k)ban bukkan fel az ahankára kifejezés?`, a: `a szánkhjában (és a rá épülő jógában, ahol a csitta = buddhi + ahankára + manasz)` },
+        { q: `Mely iskolá(k)ban bukkan fel az egyedi és az egyetemes fogalma?`, a: `a vaisésikában (visésa és számánja), és a rá épülő njájában` },
+        { q: `Mely darsana alapozott Jádnyavalkja tanaira?`, a: `a védánta (Jádnyavalkja a Brihadáranjaka-upanisad bölcse, a Brahman–Átman tan forrása)`, warn: true, note: `Ellenőrizd: az upanisad-eredet a védántára mutat.` },
+        { q: `Ismerhette-e Ísvarakrisna a buddhizmus tanításait?`, a: `Igen. Ísvarakrisna (kb. Kr.u. 4. sz.) jóval a buddhizmus után élt, így ismerhette.`, warn: true, note: `Időrendi kérdés.` },
+        { q: `Mely darsanában bukkan fel a bódhiszattva fogalma?`, a: `Egyikben sem — ez buddhista (mahájána) fogalom.`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Mely darsanában bukkan fel a függő keletkezés fogalma?`, a: `Egyikben sem — ez buddhista fogalom (paticcsaszamuppáda).`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Mely darsanában bukkan fel a nibbána fogalma?`, a: `Egyikben sem — buddhista fogalom. A darsanák megszabadulása: kaivalja / apavarga / móksa.`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Mely darsana alapművet írták nem szanszkrit nyelven?`, a: `Egyiket sem — mind a hat alapszöveg (Vaisésika-szútra, Njája-szútra, Szánkhja-káriká, Jóga-szútra, Brahma-szútra, Mímánszá-szútra) szanszkrit.`, warn: true, note: `Becsapós — ellenőrizd a tanárral.` },
+        { q: `Mely évszázadok a darsana iskolák fénykora?`, a: `kb. Kr.e. 2. – Kr.u. 3-4. század (a kialakulás és virágzás időszaka)`, warn: true, note: `Időpont — ellenőrizd.` },
+        { q: `Mely darsanában bukkan fel a vipasszaná fogalma?`, a: `Egyikben sem — buddhista meditációs fogalom.`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Mely darsanában bukkan fel a szatipatthána fogalma?`, a: `Egyikben sem — buddhista fogalom.`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Mely darsanában bukkan fel az öt léthalmaz tana?`, a: `Egyikben sem — buddhista tan (panycsakkhandha).`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Mely darsanában bukkan fel az upékkhá fogalma?`, a: `Egyikben sem — buddhista fogalom (egykedvűség).`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Mely darsanában bukkan fel az arhat fogalma?`, a: `Egyikben sem — buddhista fogalom.`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Mit jelent a szanszkára kifejezés?`, a: `ösztönzés, késztetőerő (latens benyomás); a legmélyebb (nirbídzsa) szamádhiban ezek is eltűnnek` },
+        { q: `Hol a hiba? A) Brahmadatta él, mert szenved. B) Brahmadatta él, mert nem mindig szenved.`, a: `Mindkettő hibás vjápti: a szenvedés (vagy annak hiánya) nem következetes jele az „élet”-nek. Az „él” jele inkább a lélek jeleinek együttese (lélegzés, öröm-szenvedés, megismerés). B) ráadásul önellentmondó.`, warn: true, note: `Becsapós érvelés-vizsgálat.` },
+        { q: `Hol a hiba? A) A lélek és az elme úgy kapcsolódnak össze, mint a tó és a pára. B) Nincs mindig pára a tó fölött.`, a: `B) a példába köt bele — a hasonlat csak illusztráció, nem bizonyíték → hibás ellenvetés.`, warn: true, note: `Becsapós érvelés-vizsgálat.` },
+        { q: `Miért rövidek és tömörek a darsana alapszövegek?`, a: `mert szútrák: fejből megtanulandó, memorizálható, tömör „fonál”-mondatok, amelyekhez a magyarázat szóban / kommentárban társul` },
+        { q: `Mely darsana használja leginkább a csitta fogalmát?`, a: `a jóga (csitta-vritti-niródha)` },
+        { q: `Mi az alapvető különbség a hindu és a buddhista logika között?`, a: `a hindu (njája) logika a hagyományos logikai kereteken belül marad és pozitív tételeket bizonyít; a buddhista (Nágárdzsuna) a logika eszközével magát a logikát haladja meg`, warn: true, note: `Ellenőrizd a megfogalmazást.` },
+        { q: `Miért nem lehet logikai eszközökkel bebizonyítani, hogy a logika nem bizonyító erejű?`, a: `mert aki ezt bizonyítani akarja, maga is a logikát használja → önellentmondás: ha sikerül a bizonyítás, akkor a logika mégis bizonyító erejű`, warn: true, note: `Önreferens csapda.` },
+        { q: `Mi köze van Arisztotelésznek a hindu logikához?`, a: `a görög filozófia (köztük az arisztotelészi logika) hatása az egyik körülmény, ami a hindu logika (njája) kialakulását inspirálta`, warn: true, note: `Ellenőrizd.` },
+        { q: `Melyik darsana iskola nem fogadta el az upanisadok tanait?`, a: `Mind a hat ásztika darsana elfogadja a Védát kinyilatkoztatásnak — szigorúan véve egyik sem „utasítja el” az upanisadokat. Ha valamelyik, a mímánszá áll legtávolabb az upanisad-bölcselettől (a rituális részt emeli ki).`, warn: true, note: `Becsapós — beszéld át a tanárral a várt választ.` },
+        { q: `Mit jelent a „bizonyos szó” kifejezés?`, a: `sabda — megbízható tanítás / hiteles közlés mint mérvadó megismerés (a mester vagy a szentirat tanúbizonysága)` },
+        { q: `Hány alfaja van a következtetésnek?`, a: `három: okból okozatra (felhők → eső), okozatból okra (áradó folyó → eső volt), időbeli periodicitás (mindig felkelt a nap → holnap is)` },
+        { q: `Mit jelentenek a cselekvő szervek (karma-indriják) a szánkhja rendszerében?`, a: `az öt cselekvő képesség: beszéd, megfogás (kéz), járás (láb), ürítés, szaporodás` },
+        { q: `Mi történik a Prakritivel, ha a lélek elkülönül?`, a: `a Természet „eltáncol” — mint a táncosnő a tánc végén lelép; miután megmutatta magát az Embernek, nem burjánzik tovább, leveti formáit (a Purusa számára megszűnik)` },
+        { q: `Mely darsana foglalkozik részletesen a rendkívüli képességekkel?`, a: `a jóga (a sziddhik; a Jóga-szútra harmadik fejezete, a vibhúti-páda)`, warn: true, note: `A deckeken kívülről pótolt — ellenőrizd.` },
+        { q: `Mi a jóga öt erkölcsi alapelve?`, a: `az öt jama (a „visszatartások”): nemártás (ahínszá), igazság (szatja), nem-elvétel (asztéja), önmegtartóztatás (brahmácsárja), nem-ragaszkodás (aparigraha)`, warn: true, note: `Kétértelmű lehet: a nijama (erények) is szóba jöhet.` },
+        { q: `Mi az összefüggés az erkölcsök betartása és a révület megvalósítása között?`, a: `az erkölcsi alapelvek (jama-nijama) célja, hogy alkalmassá tegyék a tudatot a révület (szamádhi) elérésére — ez minden jóga-tag célja` },
+        { q: `Mi az összefüggés a lélegzés kontrollja és a tudatfolyamatok között?`, a: `a pránájáma elcsendesíti, letisztítja az elmét, ezzel csökkenti a tudatfolyamatokat (csitta-vritti), és előkészíti a mélyebb összpontosítást` },
+        { q: `Mit jelent a hatha-jóga kifejezés?`, a: `a „testi/erőteljes” jóga (a test, testtartások és lélegzet által) — megkülönböztetve Patandzsali rádzsa-jógájától`, warn: true, note: `A klasszikus szútrán kívüli fogalom — ellenőrizd.` },
+        { q: `Mi az összefüggés Purusa és Ísvara között?`, a: `Ísvara egy különleges, sosem-kötött Purusa (Lélek), aki a karmikus tettek terméseitől eleve mentes — tehát a Purusa kitüntetett esete` },
+        { q: `Mit jelent a szútra szó a darsanák esetében?`, a: `„fonál” — tömör, fejből megtanulandó alapmondat/aforizma, amelyre az iskola tanítása felfűződik` },
+        { q: `Mi képezte a legfőbb vitapontot a darsanák és a buddhizmus között?`, a: `az örök Lélek/Én (Átman) léte: a hindu iskolák állítják, a buddhizmus tagadja (anattá). Valamint a Véda kinyilatkoztatás-volta.`, warn: true, note: `Kulcskérdés.` },
+        { q: `Mit jelent a dharma szó?`, a: `tágan: törvény, erény, helyes rend/út (a szánkhjában a „törvény” felfelé vezet, a „törvény nélküliség” lefelé)`, warn: true, note: `Sokértelmű — buddhista kontextusban „tan/jelenség”; a darsanáknál „törvény/erény”.` },
+        { q: `Melyik darsana-szútra említi a hét megvilágosodási tényezőt?`, a: `Egyik sem — a „hét megvilágosodási tényező” (boddzshanga) buddhista tan.`, warn: true, note: `Becsapós: nem darsana-fogalom.` },
+        { q: `Ki mondta: A szenvedés oka a létszomj?`, a: `a Buddha (a második nemes igazság) — nem darsana-tanítás`, warn: true, note: `Becsapós: buddhista tétel.` },
+        { q: `Ki mondta: A megszabaduláshoz a hat alapkategória lényegi megkülönböztetése vezet?`, a: `a vaisésika (Kanáda, Vaisésika-szútra I.4.)` },
+        { q: `Ki mondta: Az Isten nem más, mint a szenves cselekvés következményeitől megszabadult lélek?`, a: `Patandzsali (a jóga Ísvara-definíciója)` },
+        { q: `Ki mondta: Minden a Brahman, az anyagi világ illúzió?`, a: `az advaita védánta (Sankara / Bádarájana iránya)` },
+        { q: `Melyik darsana iskola gyakorlata halt el Indiában?`, a: `a szánkhja — mint önálló iskolagyakorlat elhalt/beolvadt; elmélete tovább élt a jógában és az ájurvédában`, warn: true, note: `Bizonytalan — ellenőrizd a várt választ.` }
+      ]
+    }
+  ]
+};
+
+
+/* ---------- Tanuló-app logika ---------- */
+(function(){
+  "use strict";
+  const T = QUESTIONS.topics;
+  const LS = "darsana-tanulo-v1";
+  let state = {
+    topic: T[0].id,
+    mode: "card",
+    warnOnly: false,
+    query: "",
+    idx: 0,
+    known: {}      // "topicid#index" -> true
+  };
+  try { Object.assign(state, JSON.parse(localStorage.getItem(LS) || "{}")); } catch(e){}
+  // never persist a transient query
+  state.query = "";
+
+  const $ = s => document.querySelector(s);
+  const view = $("#view");
+  $("#subtitle").textContent = QUESTIONS.meta.intro;
+  $("#foot").textContent = "Offline tanulóanyag • a ⚠ jelzések becsapós vagy ellenőrzendő tételek • lapozz vagy keress";
+
+  function save(){
+    try{ localStorage.setItem(LS, JSON.stringify({topic:state.topic, mode:state.mode, warnOnly:state.warnOnly, known:state.known})); }catch(e){}
+  }
+  function curTopic(){ return T.find(t=>t.id===state.topic) || T[0]; }
+  function keyOf(t,i){ return t.id + "#" + i; }
+
+  // filtered item list for current topic (returns {item, gi} with original index gi)
+  function items(){
+    const t = curTopic();
+    let arr = t.items.map((it,gi)=>({it,gi}));
+    if(state.warnOnly) arr = arr.filter(o=>o.it.warn);
+    if(state.query){
+      const q = state.query.toLowerCase();
+      arr = arr.filter(o => (o.it.q+" "+o.it.a+" "+(o.it.note||"")).toLowerCase().includes(q));
+    }
+    return arr;
+  }
+
+  function esc(s){ return s.replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+  function hl(s){
+    s = esc(s);
+    if(!state.query) return s;
+    const q = state.query.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    return s.replace(new RegExp("("+q+")","ig"), "<mark>$1</mark>");
+  }
+
+  /* ----- CHIPS ----- */
+  function renderChips(){
+    const c = $("#chips"); c.innerHTML="";
+    T.forEach(t=>{
+      const b=document.createElement("button");
+      b.className="chip"+(t.id===state.topic?" active":"");
+      b.innerHTML = esc(t.name)+'<span class="cnt">'+t.items.length+'</span>';
+      b.onclick=()=>{ state.topic=t.id; state.idx=0; quizReset(); save(); render();
+        // scroll active chip into view
+        b.scrollIntoView({inline:"center", block:"nearest", behavior:"smooth"}); };
+      c.appendChild(b);
+    });
+  }
+
+  /* ----- CARD MODE ----- */
+  function renderCard(){
+    const arr = items();
+    const t = curTopic();
+    if(!arr.length){ view.innerHTML='<div class="empty">Nincs találat ebben a témakörben.<br>Próbáld más kereséssel vagy kapcsold ki a ⚠ szűrőt.</div>'; return; }
+    if(state.idx>=arr.length) state.idx=0;
+    if(state.idx<0) state.idx=arr.length-1;
+    const {it,gi} = arr[state.idx];
+    const known = state.known[keyOf(t,gi)];
+    const pct = Math.round((state.idx+1)/arr.length*100);
+    view.innerHTML =
+      '<div class="deck">'+
+        '<div class="progress"><span>'+(state.idx+1)+' / '+arr.length+'</span><span class="bar"><i style="width:'+pct+'%"></i></span>'+(known?'<span style="color:var(--good)">✓ tudom</span>':'')+'</div>'+
+        '<div class="card" id="card">'+
+          '<div class="tag">'+esc(t.name)+(it.warn?' <span class="warnflag">⚠</span>':'')+'</div>'+
+          '<div class="q">'+hl(it.q)+'</div>'+
+          '<div class="reveal-hint">👆 Koppints a válaszért</div>'+
+          '<div class="ans" style="display:none">'+
+            '<div class="a">'+hl(it.a)+'</div>'+
+            (it.note?'<div class="note">⚠ '+hl(it.note)+'</div>':'')+
+          '</div>'+
+        '</div>'+
+        '<div class="know" id="know" style="display:none">'+
+          '<button class="no">↻ Még gyakorlom</button>'+
+          '<button class="yes">✓ Tudom</button>'+
+        '</div>'+
+        '<div class="deck-nav">'+
+          '<button id="prev">‹ Előző</button>'+
+          '<button id="shuffle">🔀 Keverés</button>'+
+          '<button id="next" class="primary">Következő ›</button>'+
+        '</div>'+
+      '</div>';
+
+    const card=$("#card");
+    function flip(){
+      card.classList.add("flipped");
+      card.querySelector(".ans").style.display="block";
+      $("#know").style.display="flex";
+    }
+    card.onclick=()=>{ if(!card.classList.contains("flipped")) flip(); };
+    $("#prev").onclick=()=>{ state.idx--; renderCard(); };
+    $("#next").onclick=()=>{ state.idx++; renderCard(); };
+    $("#shuffle").onclick=()=>{ shuffleTopic(); state.idx=0; renderCard(); };
+    $("#know").querySelector(".yes").onclick=()=>{ state.known[keyOf(t,gi)]=true; save(); state.idx++; renderCard(); };
+    $("#know").querySelector(".no").onclick=()=>{ delete state.known[keyOf(t,gi)]; save(); state.idx++; renderCard(); };
+
+    // swipe
+    let x0=null;
+    card.ontouchstart=e=>{ x0=e.touches[0].clientX; };
+    card.ontouchend=e=>{
+      if(x0===null) return;
+      const dx=e.changedTouches[0].clientX-x0; x0=null;
+      if(Math.abs(dx)>55){ if(dx<0) state.idx++; else state.idx--; renderCard(); }
+    };
+  }
+
+  // in-place shuffle of the current topic's items array (keeps gi mapping via stable objects)
+  function shuffleTopic(){
+    const t=curTopic();
+    for(let i=t.items.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [t.items[i],t.items[j]]=[t.items[j],t.items[i]]; }
+  }
+
+  /* ----- QUIZ MODE ----- */
+  let quiz = { score:0, total:0, opts:null, picked:null, forKey:null };
+  function quizReset(){ quiz.score=0; quiz.total=0; quiz.opts=null; quiz.picked=null; quiz.forKey=null; }
+
+  function shuffleArr(a){
+    for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+  // pick n plausible wrong answers, preferably from the same topic
+  function distractors(t, correct, n){
+    let pool = [...new Set(t.items.map(x=>x.a).filter(a=>a!==correct))];
+    if(pool.length < n){
+      T.forEach(tt=>{ if(tt!==t) tt.items.forEach(x=>{ if(x.a!==correct) pool.push(x.a); }); });
+      pool = [...new Set(pool)];
+    }
+    return shuffleArr(pool).slice(0, n);
+  }
+
+  function renderQuiz(){
+    const arr = items(); const t = curTopic();
+    if(!arr.length){ view.innerHTML='<div class="empty">Nincs találat ebben a témakörben.<br>Próbáld más kereséssel vagy kapcsold ki a ⚠ szűrőt.</div>'; return; }
+    if(state.idx>=arr.length) state.idx=0;
+    if(state.idx<0) state.idx=arr.length-1;
+    const {it,gi} = arr[state.idx];
+    const key = keyOf(t,gi);
+    if(quiz.forKey !== key){
+      quiz.opts = shuffleArr([it.a, ...distractors(t, it.a, 3)]);
+      quiz.picked = null; quiz.forKey = key;
+    }
+    const answered = quiz.picked !== null;
+    const pct = Math.round((state.idx+1)/arr.length*100);
+    const letters = ["A","B","C","D","E","F"];
+
+    let opts = "";
+    quiz.opts.forEach((a,i)=>{
+      let cls = "opt";
+      if(answered){
+        cls += " locked";
+        if(a===it.a) cls += " correct";
+        else if(a===quiz.picked) cls += " wrong";
+        else cls += " dim";
+      }
+      let mk = "";
+      if(answered && a===it.a) mk = '<span class="mk" style="color:var(--good)">✓</span>';
+      else if(answered && a===quiz.picked) mk = '<span class="mk" style="color:#d97a5e">✗</span>';
+      opts += '<button class="'+cls+'" data-i="'+i+'"><span class="lt">'+letters[i]+'</span><span class="ot">'+hl(a)+'</span>'+mk+'</button>';
+    });
+
+    view.innerHTML =
+      '<div class="deck">'+
+        '<div class="progress"><span>'+(state.idx+1)+' / '+arr.length+'</span><span class="bar"><i style="width:'+pct+'%"></i></span>'+
+          '<span class="score">'+(quiz.total?('<b>'+quiz.score+'</b> / '+quiz.total):'')+'</span></div>'+
+        '<div class="quizq">'+
+          '<div class="tag">'+esc(t.name)+(it.warn?' <span class="warnflag">⚠</span>':'')+'</div>'+
+          '<div class="q">'+hl(it.q)+'</div>'+
+        '</div>'+
+        '<div class="quiz-opts" id="opts">'+opts+'</div>'+
+        (answered && it.note ? '<div class="quiz-note">⚠ '+hl(it.note)+'</div>' : '')+
+        '<div class="deck-nav">'+
+          '<button id="prev">‹ Előző</button>'+
+          '<button id="shuffle">🔀 Keverés</button>'+
+          '<button id="next" class="primary">'+(answered?'Következő ›':'Kihagyom ›')+'</button>'+
+        '</div>'+
+      '</div>';
+
+    if(!answered){
+      $("#opts").querySelectorAll(".opt").forEach(b=>{
+        b.onclick=()=>{
+          const a = quiz.opts[+b.dataset.i];
+          quiz.picked = a; quiz.total++;
+          if(a===it.a) quiz.score++;
+          renderQuiz();
+        };
+      });
+    }
+    $("#prev").onclick=()=>{ state.idx--; renderQuiz(); };
+    $("#next").onclick=()=>{ state.idx++; renderQuiz(); };
+    $("#shuffle").onclick=()=>{ shuffleTopic(); state.idx=0; quiz.forKey=null; renderQuiz(); };
+  }
+
+  /* ----- LIST MODE ----- */
+  function renderList(){
+    const arr=items(); const t=curTopic();
+    let html="";
+    if(t.isSzobeli && QUESTIONS.meta.szobeliNote && !state.query && !state.warnOnly)
+      html += '<div class="infonote">'+esc(QUESTIONS.meta.szobeliNote)+'</div>';
+    if(!arr.length){ view.innerHTML=(html||'')+'<div class="empty">Nincs találat.</div>'; return; }
+    html += '<div class="list">';
+    arr.forEach((o,n)=>{
+      const it=o.it;
+      html +=
+        '<details class="qa">'+
+          '<summary><span class="ix">'+(n+1)+'.</span><span>'+hl(it.q)+(it.warn?' <span class="wf">⚠</span>':'')+'</span></summary>'+
+          '<div class="body">'+hl(it.a)+(it.note?'<div class="note">⚠ '+hl(it.note)+'</div>':'')+'</div>'+
+        '</details>';
+    });
+    html+='</div>';
+    view.innerHTML=html;
+  }
+
+  function render(){
+    renderChips();
+    $("#warnOnly").classList.toggle("on", state.warnOnly);
+    document.querySelectorAll("#mode button").forEach(b=>b.classList.toggle("on", b.dataset.mode===state.mode));
+    if(state.mode==="card") renderCard();
+    else if(state.mode==="quiz") renderQuiz();
+    else renderList();
+  }
+
+  /* ----- wiring ----- */
+  $("#q").addEventListener("input", e=>{ state.query=e.target.value.trim(); state.idx=0; quiz.forKey=null; if(state.mode==="card") renderCard(); else if(state.mode==="quiz") renderQuiz(); else renderList(); });
+  document.querySelectorAll("#mode button").forEach(b=>{
+    b.onclick=()=>{ state.mode=b.dataset.mode; state.idx=0; if(state.mode==="quiz") quizReset(); save(); render(); };
+  });
+  $("#warnOnly").onclick=()=>{ state.warnOnly=!state.warnOnly; state.idx=0; quizReset(); save(); render(); };
+  document.addEventListener("keydown", e=>{
+    if(state.mode==="quiz"){
+      if(e.key==="ArrowRight"||e.key==="Enter"){ state.idx++; renderQuiz(); }
+      else if(e.key==="ArrowLeft"){ state.idx--; renderQuiz(); }
+      else if(/^[1-4]$/.test(e.key)){
+        const b=$("#opts") && $("#opts").querySelector('.opt[data-i="'+(+e.key-1)+'"]:not(.locked)');
+        if(b) b.click();
+      }
+      return;
+    }
+    if(state.mode!=="card") return;
+    if(e.key==="ArrowRight"){ state.idx++; renderCard(); }
+    else if(e.key==="ArrowLeft"){ state.idx--; renderCard(); }
+    else if(e.key===" "||e.key==="Enter"){ const c=$("#card"); if(c&&!c.classList.contains("flipped")){ e.preventDefault(); c.click(); } }
+  });
+
+  render();
+})();
+
+</script>
+</body>
+</html>
+
