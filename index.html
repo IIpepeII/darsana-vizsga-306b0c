@@ -681,7 +681,7 @@ const QUESTIONS = {
     return shuffleArr(pool).slice(0, n);
   }
 
-  function renderQuiz(){
+  function renderQuiz(scrollToQ){
     const arr = items(); const t = curTopic();
     if(!arr.length){ view.innerHTML='<div class="empty">Nincs találat ebben a témakörben.<br>Próbáld más kereséssel vagy kapcsold ki a ⚠ szűrőt.</div>'; return; }
     if(state.idx>=arr.length) state.idx=0;
@@ -738,9 +738,15 @@ const QUESTIONS = {
         };
       });
     }
-    $("#prev").onclick=()=>{ state.idx--; renderQuiz(); };
-    $("#next").onclick=()=>{ state.idx++; renderQuiz(); };
-    $("#shuffle").onclick=()=>{ shuffleTopic(); state.idx=0; quiz.forKey=null; renderQuiz(); };
+    $("#prev").onclick=()=>{ state.idx--; renderQuiz(true); };
+    $("#next").onclick=()=>{ state.idx++; renderQuiz(true); };
+    $("#shuffle").onclick=()=>{ shuffleTopic(); state.idx=0; quiz.forKey=null; renderQuiz(true); };
+
+    // új kérdésre lépéskor görgessünk fel a kérdéshez (telón ne kelljen kézzel visszagörgetni)
+    if(scrollToQ){
+      const q = $(".quizq");
+      if(q) requestAnimationFrame(()=> q.scrollIntoView({behavior:"smooth", block:"start"}));
+    }
   }
 
   /* ----- LIST MODE ----- */
@@ -780,8 +786,8 @@ const QUESTIONS = {
   $("#warnOnly").onclick=()=>{ state.warnOnly=!state.warnOnly; state.idx=0; quizReset(); save(); render(); };
   document.addEventListener("keydown", e=>{
     if(state.mode==="quiz"){
-      if(e.key==="ArrowRight"||e.key==="Enter"){ state.idx++; renderQuiz(); }
-      else if(e.key==="ArrowLeft"){ state.idx--; renderQuiz(); }
+      if(e.key==="ArrowRight"||e.key==="Enter"){ state.idx++; renderQuiz(true); }
+      else if(e.key==="ArrowLeft"){ state.idx--; renderQuiz(true); }
       else if(/^[1-4]$/.test(e.key)){
         const b=$("#opts") && $("#opts").querySelector('.opt[data-i="'+(+e.key-1)+'"]:not(.locked)');
         if(b) b.click();
